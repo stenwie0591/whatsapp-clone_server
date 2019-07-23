@@ -4,7 +4,6 @@ import schema from '../../schema';
 
 describe('Query.chat', () => {
   it('should fetch specified chat', async () => {
-
     const server = new ApolloServer({ schema });
 
     const { query } = createTestClient(server);
@@ -31,5 +30,4 @@ describe('Query.chat', () => {
     expect(res.errors).toBeUndefined();
     expect(res.data).toMatchSnapshot();
   });
-  
 });
