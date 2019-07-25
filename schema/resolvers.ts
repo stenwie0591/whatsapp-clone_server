@@ -4,16 +4,19 @@ import { Resolvers } from '../types/graphql';
 
 const resolvers: Resolvers = {
   Date: GraphQLDateTime,
+
   Chat: {
     messages(chat) {
       return messages.filter(m => chat.messages.includes(m.id));
     },
+
     lastMessage(chat) {
       const lastMessage = chat.messages[chat.messages.length - 1];
 
       return messages.find(m => m.id === lastMessage) || null;
     },
   },
+
   Query: {
     chats() {
       return chats;
@@ -25,23 +28,38 @@ const resolvers: Resolvers = {
   },
 
   Mutation: {
-    addMessage(root, { chatId, content }) {
+    addMessage(root, { chatId, content }, { pubsub }) {
       const chatIndex = chats.findIndex(c => c.id === chatId);
+
       if (chatIndex === -1) return null;
+
       const chat = chats[chatIndex];
-      const lastMessageId = chat.messages[chat.messages.length - 1];
-      const messageId = String(Number(lastMessageId) + 1);
+      const recentMessage = messages[messages.length - 1];
+      const messageId = String(Number(recentMessage.id) + 1);
       const message: Message = {
         id: messageId,
         createdAt: new Date(),
         content,
       };
+
       messages.push(message);
       chat.messages.push(messageId);
       // The chat will appear at the top of the ChatsList component
       chats.splice(chatIndex, 1);
       chats.unshift(chat);
+
+      pubsub.publish('messageAdded', {
+        messageAdded: message,
+      });
+
       return message;
+    },
+  },
+
+  Subscription: {
+    messageAdded: {
+      subscribe: (root, args, { pubsub }) =>
+        pubsub.asyncIterator('messageAdded'),
     },
   },
 };
