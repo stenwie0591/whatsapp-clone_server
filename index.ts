@@ -3,7 +3,7 @@ import bodyParser from 'body-parser';
 import cors from 'cors';
 import express from 'express';
 import http from 'http';
-import { chats } from './db';
+import { chats, users } from './db';
 import schema from './schema';
 
 const app = express();
@@ -22,7 +22,10 @@ app.get('/chats', (req, res) => {
 const pubsub = new PubSub();
 const server = new ApolloServer({
   schema,
-  context: () => ({ pubsub }),
+  context: () => ({
+    currentUser: users.find(u => u.id === '1'),
+    pubsub,
+  }),
 });
 
 server.applyMiddleware({
