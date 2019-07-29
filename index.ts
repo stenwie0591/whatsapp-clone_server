@@ -1,11 +1,11 @@
 import { ApolloServer, gql, PubSub } from 'apollo-server-express';
 import bodyParser from 'body-parser';
 import cors from 'cors';
-import cookie from 'cookie';
 import cookieParser from 'cookie-parser';
+import cookie from 'cookie';
 import express from 'express';
 import http from 'http';
-import { chats, users } from './db';
+import { users } from './db';
 import schema from './schema';
 
 const app = express();
@@ -17,10 +17,6 @@ app.use(cookieParser());
 
 app.get('/_ping', (req, res) => {
   res.send('pong');
-});
-
-app.get('/chats', (req, res) => {
-  res.json(chats);
 });
 
 const pubsub = new PubSub();

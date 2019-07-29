@@ -1,15 +1,15 @@
+export type User = {
+  id: string;
+  name: string;
+  picture: string;
+};
+
 export type Message = {
   id: string;
   content: string;
   createdAt: Date;
   sender: string;
   recipient: string;
-};
-
-export type User = {
-  id: string;
-  name: string;
-  picture: string;
 };
 
 export type Chat = {
