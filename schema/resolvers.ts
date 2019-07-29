@@ -2,6 +2,10 @@ import { withFilter } from 'apollo-server-express';
 import { GraphQLDateTime } from 'graphql-iso-date';
 import { User, Message, Chat, chats, messages, users } from '../db';
 import { Resolvers } from '../types/graphql';
+import { secret, expiration } from '../env';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import { validateLength, validatePassword } from '../validators';
 
 const resolvers: Resolvers = {
   Date: GraphQLDateTime,
@@ -67,6 +71,10 @@ const resolvers: Resolvers = {
   },
 
   Query: {
+    me(root, args, { currentUser }) {
+      return currentUser || null;
+    },
+
     chats(root, args, { currentUser }) {
       if (!currentUser) return [];
 
@@ -91,6 +99,54 @@ const resolvers: Resolvers = {
   },
 
   Mutation: {
+    signIn(root, { username, password }, { res }) {
+      const user = users.find(u => u.username === username);
+
+      if (!user) {
+        throw new Error('user not found');
+      }
+
+      const passwordsMatch = bcrypt.compareSync(password, user.password);
+
+      if (!passwordsMatch) {
+        throw new Error('password is incorrect');
+      }
+
+      const authToken = jwt.sign(username, secret);
+
+      res.cookie('authToken', authToken, { maxAge: expiration });
+
+      return user;
+    },
+
+    signUp(root, { name, username, password, passwordConfirm }) {
+      validateLength('req.name', name, 3, 50);
+      validateLength('req.username', username, 3, 18);
+      validatePassword('req.password', password);
+
+      if (password !== passwordConfirm) {
+        throw Error("req.password and req.passwordConfirm don't match");
+      }
+
+      if (users.some(u => u.username === username)) {
+        throw Error('username already exists');
+      }
+
+      const passwordHash = bcrypt.hashSync(password, bcrypt.genSaltSync(8));
+
+      const user: User = {
+        id: String(users.length + 1),
+        password: passwordHash,
+        picture: '',
+        username,
+        name,
+      };
+
+      users.push(user);
+
+      return user;
+    },
+
     addMessage(root, { chatId, content }, { currentUser, pubsub }) {
       if (!currentUser) return null;
 
