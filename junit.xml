@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<testsuites name="jest tests" tests="1" failures="0" time="11.732">
-  <testsuite name="Query.chats" errors="0" failures="0" skipped="0" timestamp="2019-07-22T09:43:31" time="8.382" tests="1">
-    <testcase classname="Query.chats should fetch all chats" name="Query.chats should fetch all chats" time="0.045">
+<testsuites name="jest tests" tests="5" failures="0" time="4.713">
+  <testsuite name="Query.getUsers" errors="0" failures="0" skipped="0" timestamp="2019-07-29T08:01:32" time="2.59" tests="1">
+    <testcase classname="Query.getUsers should fetch all users except the one signed-in" name="Query.getUsers should fetch all users except the one signed-in" time="0.067">
+    </testcase>
+  </testsuite>
+  <testsuite name="Mutation.addMessage" errors="0" failures="0" skipped="0" timestamp="2019-07-29T08:01:33" time="2.636" tests="1">
+    <testcase classname="Mutation.addMessage should add message to specified chat" name="Mutation.addMessage should add message to specified chat" time="0.11">
+    </testcase>
+  </testsuite>
+  <testsuite name="Mutation.addChat" errors="0" failures="0" skipped="0" timestamp="2019-07-29T08:01:32" time="2.669" tests="2">
+    <testcase classname="Mutation.addChat creates a new chat between current user and specified recipient" name="Mutation.addChat creates a new chat between current user and specified recipient" time="0.154">
+    </testcase>
+    <testcase classname="Mutation.addChat returns the existing chat if so" name="Mutation.addChat returns the existing chat if so" time="0.036">
+    </testcase>
+  </testsuite>
+  <testsuite name="Query.chat" errors="0" failures="0" skipped="0" timestamp="2019-07-29T08:01:35" time="0.283" tests="1">
+    <testcase classname="Query.chat should fetch specified chat" name="Query.chat should fetch specified chat" time="0.024">
     </testcase>
   </testsuite>
 </testsuites>

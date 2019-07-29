@@ -16,4 +16,3 @@ generates:
       scalars:
         # e.g. Message.createdAt will be of type Date
         Date: Date
-        

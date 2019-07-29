@@ -1,27 +1,11 @@
 import { ApolloServer, gql, PubSub } from 'apollo-server-express';
-import bodyParser from 'body-parser';
-import cors from 'cors';
 import cookie from 'cookie';
-import cookieParser from 'cookie-parser';
-import express from 'express';
 import http from 'http';
-import { chats, users } from './db';
+import jwt from 'jsonwebtoken';
+import { app } from './app';
+import { users } from './db';
+import { origin, port, secret } from './env';
 import schema from './schema';
-
-const app = express();
-
-const origin = process.env.ORIGIN || 'http://localhost:3000';
-app.use(cors({ credentials: true, origin }));
-app.use(bodyParser.json());
-app.use(cookieParser());
-
-app.get('/_ping', (req, res) => {
-  res.send('pong');
-});
-
-app.get('/chats', (req, res) => {
-  res.json(chats);
-});
 
 const pubsub = new PubSub();
 const server = new ApolloServer({
@@ -37,9 +21,16 @@ const server = new ApolloServer({
       req.cookies = cookie.parse(req.headers.cookie || '');
     }
 
+    let currentUser;
+    if (req.cookies.authToken) {
+      const username = jwt.verify(req.cookies.authToken, secret) as string;
+      currentUser = username && users.find(u => u.username === username);
+    }
+
     return {
-      currentUser: users.find(u => u.id === req.cookies.currentUserId),
+      currentUser,
       pubsub,
+      res: session.res,
     };
   },
   subscriptions: {
@@ -60,8 +51,6 @@ server.applyMiddleware({
 
 const httpServer = http.createServer(app);
 server.installSubscriptionHandlers(httpServer);
-
-const port = process.env.PORT || 4000;
 
 httpServer.listen(port, () => {
   console.log(`Server is listening on port ${port}`);
