@@ -1,16 +1,25 @@
-import { ApolloServer, gql, PubSub } from 'apollo-server-express';
+import { ApolloServer } from 'apollo-server-express';
 import cookie from 'cookie';
 import http from 'http';
 import jwt from 'jsonwebtoken';
 import { app } from './app';
-import { users } from './db';
+import { pool } from './db';
 import { origin, port, secret } from './env';
 import schema from './schema';
+import { MyContext } from './context';
+import sql from 'sql-template-strings';
+const { PostgresPubSub } = require('graphql-postgres-subscriptions');
 
-const pubsub = new PubSub();
+const pubsub = new PostgresPubSub({
+  host: 'localhost',
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT) : 5432,
+  user: 'testuser',
+  password: 'testpassword',
+  database: 'whatsapp',
+});
 const server = new ApolloServer({
   schema,
-  context: (session: any) => {
+  context: async (session: any) => {
     // Access the request object
     let req = session.connection
       ? session.connection.context.request
@@ -24,12 +33,24 @@ const server = new ApolloServer({
     let currentUser;
     if (req.cookies.authToken) {
       const username = jwt.verify(req.cookies.authToken, secret) as string;
-      currentUser = username && users.find(u => u.username === username);
+      if (username) {
+        const { rows } = await pool.query(
+          sql`SELECT * FROM users WHERE username = ${username}`
+        );
+        currentUser = rows[0];
+      }
+    }
+
+    let db;
+
+    if (!session.connection) {
+      db = await pool.connect();
     }
 
     return {
       currentUser,
       pubsub,
+      db,
       res: session.res,
     };
   },
@@ -40,6 +61,11 @@ const server = new ApolloServer({
         request: ctx.request,
       };
     },
+  },
+  formatResponse: (res: any, { context }: { context: MyContext }) => {
+    context.db.release();
+
+    return res;
   },
 });
 
