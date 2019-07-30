@@ -129,109 +129,26 @@ const resolvers: Resolvers = {
   },
 
   Mutation: {
-    async addMessage(root, { chatId, content }, { currentUser, injector, db }) {
+    async addMessage(root, { chatId, content }, { currentUser, injector }) {
       if (!currentUser) return null;
 
-      const { rows } = await db.query(sql`
-        INSERT INTO messages(chat_id, sender_user_id, content)
-        VALUES(${chatId}, ${currentUser.id}, ${content})
-        RETURNING *
-      `);
-
-      const messageAdded = rows[0];
-
-      injector.get(PubSub).publish('messageAdded', {
-        messageAdded,
-      });
-
-      return messageAdded;
+      return injector
+        .get(Chats)
+        .addMessage({ chatId, content, userId: currentUser.id });
     },
 
-    async addChat(root, { recipientId }, { currentUser, injector, db }) {
+    async addChat(root, { recipientId }, { currentUser, injector }) {
       if (!currentUser) return null;
 
-      const { rows } = await db.query(sql`
-        SELECT chats.* FROM chats, (SELECT * FROM chats_users WHERE user_id = ${currentUser.id}) AS chats_of_current_user, chats_users
-        WHERE chats_users.chat_id = chats_of_current_user.chat_id
-        AND chats.id = chats_users.chat_id
-        AND chats_users.user_id = ${recipientId}
-      `);
-
-      // If there is already a chat between these two users, return it
-      if (rows[0]) {
-        return rows[0];
-      }
-
-      try {
-        await db.query('BEGIN');
-
-        const { rows } = await db.query(sql`
-          INSERT INTO chats
-          DEFAULT VALUES
-          RETURNING *
-        `);
-
-        const chatAdded = rows[0];
-
-        await db.query(sql`
-          INSERT INTO chats_users(chat_id, user_id)
-          VALUES(${chatAdded.id}, ${currentUser.id})
-        `);
-
-        await db.query(sql`
-          INSERT INTO chats_users(chat_id, user_id)
-          VALUES(${chatAdded.id}, ${recipientId})
-        `);
-
-        await db.query('COMMIT');
-
-        injector.get(PubSub).publish('chatAdded', {
-          chatAdded,
-        });
-
-        return chatAdded;
-      } catch (e) {
-        await db.query('ROLLBACK');
-        throw e;
-      }
+      return injector
+        .get(Chats)
+        .addChat({ recipientId, userId: currentUser.id });
     },
 
-    async removeChat(root, { chatId }, { currentUser, injector, db }) {
+    async removeChat(root, { chatId }, { currentUser, injector }) {
       if (!currentUser) return null;
 
-      try {
-        await db.query('BEGIN');
-
-        const { rows } = await db.query(sql`
-          SELECT chats.* FROM chats, chats_users
-          WHERE id = ${chatId}
-          AND chats.id = chats_users.chat_id
-          AND chats_users.user_id = ${currentUser.id}
-        `);
-
-        const chat = rows[0];
-
-        if (!chat) {
-          await db.query('ROLLBACK');
-          return null;
-        }
-
-        await db.query(sql`
-          DELETE FROM chats WHERE chats.id = ${chatId}
-        `);
-
-        injector.get(PubSub).publish('chatRemoved', {
-          chatRemoved: chat.id,
-          targetChat: chat,
-        });
-
-        await db.query('COMMIT');
-
-        return chatId;
-      } catch (e) {
-        await db.query('ROLLBACK');
-        throw e;
-      }
+      return injector.get(Chats).removeChat({ chatId, userId: currentUser.id });
     },
   },
 
