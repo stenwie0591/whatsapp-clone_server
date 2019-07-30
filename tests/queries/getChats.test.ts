@@ -1,35 +1,21 @@
 import { createTestClient } from 'apollo-server-testing';
-import { ApolloServer, gql } from 'apollo-server-express';
-import schema from '../../schema';
-import { pool, resetDb } from '../../db';
-import sql from 'sql-template-strings';
-import { MyContext } from '../../context';
+import { gql } from 'apollo-server-express';
+import { server } from '../../server';
+import { resetDb } from '../../db';
+import { mockAuth } from '../mocks/auth.provider';
 
-describe('Query.chat', () => {
+describe('Query.chats', () => {
   beforeEach(resetDb);
 
-  it('should fetch specified chat', async () => {
-    const { rows } = await pool.query(sql`SELECT * FROM users WHERE id = 1`);
-    const currentUser = rows[0];
-    const server = new ApolloServer({
-      schema,
-      context: async () => ({
-        currentUser,
-        db: await pool.connect(),
-      }),
-      formatResponse: (res: any, { context }: { context: MyContext }) => {
-        context.db.release();
-        return res;
-      },
-    });
+  it('should fetch all chats', async () => {
+    mockAuth(1);
 
     const { query } = createTestClient(server);
 
     const res = await query({
-      variables: { chatId: '1' },
       query: gql`
-        query GetChat($chatId: ID!) {
-          chat(chatId: $chatId) {
+        query GetChats {
+          chats {
             id
             name
             picture
