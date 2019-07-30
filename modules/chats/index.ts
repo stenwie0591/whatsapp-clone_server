@@ -6,6 +6,8 @@ import usersModule from '../users';
 import { Message, Chat, pool } from '../../db';
 import { Resolvers } from '../../types/graphql';
 import { UnsplashApi } from './unsplash.api';
+import { Users } from './../users/users.provider';
+import { Chats } from './chats.provider';
 
 const typeDefs = gql`
   type Message {
@@ -58,11 +60,8 @@ const resolvers: Resolvers = {
       return rows[0] || null;
     },
 
-    async sender(message, args, { db }) {
-      const { rows } = await db.query(sql`
-        SELECT * FROM users WHERE id = ${message.sender_user_id}
-      `);
-      return rows[0] || null;
+    async sender(message, args, { injector }) {
+      return injector.get(Users).findById(message.sender_user_id);
     },
 
     async recipient(message, args, { db }) {
@@ -140,29 +139,18 @@ const resolvers: Resolvers = {
   },
 
   Query: {
-    async chats(root, args, { currentUser, db }) {
+    async chats(root, args, { currentUser, injector }) {
       if (!currentUser) return [];
 
-      const { rows } = await db.query(sql`
-        SELECT chats.* FROM chats, chats_users
-        WHERE chats.id = chats_users.chat_id
-        AND chats_users.user_id = ${currentUser.id}
-      `);
-
-      return rows;
+      return injector.get(Chats).findChatsByUser(currentUser.id);
     },
 
-    async chat(root, { chatId }, { currentUser, db }) {
+    async chat(root, { chatId }, { currentUser, injector }) {
       if (!currentUser) return null;
 
-      const { rows } = await db.query(sql`
-        SELECT chats.* FROM chats, chats_users
-        WHERE chats_users.chat_id = ${chatId}
-        AND chats.id = chats_users.chat_id
-        AND chats_users.user_id = ${currentUser.id}
-      `);
-
-      return rows[0] ? rows[0] : null;
+      return injector
+        .get(Chats)
+        .findChatByUser({ chatId, userId: currentUser.id });
     },
   },
 
@@ -333,5 +321,5 @@ export default new GraphQLModule({
   typeDefs,
   resolvers,
   imports: () => [commonModule, usersModule],
-  providers: () => [UnsplashApi],
+  providers: () => [UnsplashApi, Chats],
 });
