@@ -54,16 +54,4 @@ export default new GraphQLModule({
     },
     Database,
   ],
-  async context({ res, connection }) {
-    let db;
-
-    if (!connection) {
-      db = await pool.connect();
-    }
-
-    return {
-      res,
-      db,
-    };
-  },
 });
