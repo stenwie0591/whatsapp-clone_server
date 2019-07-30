@@ -1,0 +1,7 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`Query.me should fetch current user 1`] = `
+Object {
+  "me": null,
+}
+`;
