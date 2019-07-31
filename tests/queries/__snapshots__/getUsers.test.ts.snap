@@ -2,12 +2,24 @@
 
 exports[`Query.getUsers should fetch all users except the one signed-in 1`] = `
 Object {
-  "users": Array [],
+  "users": Array [
+    Object {
+      "id": "2",
+      "name": "Matteo Pugliese",
+      "picture": "https://raw.githubusercontent.com/Urigo/WhatsApp-Clone-Client-React/legacy/public/assets/default-profile-pic.jpg",
+    },
+  ],
 }
 `;
 
 exports[`Query.getUsers should fetch all users except the one signed-in 2`] = `
 Object {
-  "users": Array [],
+  "users": Array [
+    Object {
+      "id": "1",
+      "name": "matteoP",
+      "picture": "",
+    },
+  ],
 }
 `;

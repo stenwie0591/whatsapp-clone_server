@@ -2,6 +2,10 @@
 
 exports[`Query.me should fetch current user 1`] = `
 Object {
-  "me": null,
+  "me": Object {
+    "id": "1",
+    "name": "matteoP",
+    "picture": "",
+  },
 }
 `;

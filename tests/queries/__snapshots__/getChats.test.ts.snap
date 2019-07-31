@@ -1,7 +1,14 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
-exports[`Query.chat should fetch specified chat 1`] = `
+exports[`Query.chats should fetch all chats 1`] = `
 Object {
-  "chat": null,
+  "chats": Array [
+    Object {
+      "id": "4",
+      "lastMessage": null,
+      "name": "Matteo Pugliese",
+      "picture": "https://raw.githubusercontent.com/Urigo/WhatsApp-Clone-Client-React/legacy/public/assets/default-profile-pic.jpg",
+    },
+  ],
 }
 `;
